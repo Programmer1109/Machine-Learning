@@ -18,7 +18,7 @@ class simpleLogistic_regression:
 			return dataset
 	
 	def string_to_float(self, dataset, column):
-		for row in range(len(dataset[0])):
+		for row in dataset[0]:
 			row[column] = float(row[column].strip())
 	
 	def mean(self, list):
@@ -58,30 +58,6 @@ class simpleLogistic_regression:
 			print("Co-Variance of the two input sets is not computable as both sets are of unequal lengths.")
 			exit()
 
-	# Set1 -> Set of actual values & Set2 -> Set of predicted values 
-	def calcThreshold(self, Set1, Set2):
-		TPR = 0.0
-		FPR = 0.0
-		TNR = 0.0
-		FNR = 0.0
-		for iter in range(len(Set1)):
-			if Set1[iter] == Set2[iter]:
-				if Set1[iter] == 1:
-					TPR += 1.00
-				elif Set1[iter] == 0:
-					TNR += 1.00
-			elif Set1[iter] != Set2[iter]:
-				if Set1[iter] == 1:
-					FPR += 1.00
-				elif Set1[iter] == 0:
-					FNR += 1.00
-		totalElements = float(len(Set1))
-		TPR = TPR/totalElements
-		TNR = TNR/totalElements
-		FPR = FPR/totalElements
-		FNR = FNR/totalElements
-		
-
 	def coefficients(self, trainSet):
 		X_data = []
 		Y_data = []
@@ -92,7 +68,6 @@ class simpleLogistic_regression:
 		Ym = self.mean(Y_data)
 		beta1 = self.covariance(X_data, Y_data)/ self.variance(X_data)
 		beta0 = Ym - beta1*Xm
-		print(f"Coefficients :- beta0 = {beta0}\tbeta1 = {beta1}\n")
 		return [beta0, beta1]
 
 	def predict(self, trainSet, beta):
@@ -100,35 +75,77 @@ class simpleLogistic_regression:
 		for iter in range(trainSet):
 			yhat = beta[0] + beta[1] * trainSet[iter][0]
 			proSuccess = algebra.exp(yhat)/(1+algebra.exp(yhat))
-			if proSuccess>self.threshold:
+			if proSuccess>=self.threshold:
 				proSuccess = 1
 			elif proSuccess<self.threshold:
 				proSuccess = 0
 			proability.append(proSuccess)
 		return proability
 
+	# Set1 -> Set of actual values & Set2 -> Set of predicted values 
+	def measureAccuracy(self, Set1, Set2):
+		count = [0, 0, 0, 0]
+		for iter in range(len(Set1)):
+			# Correct Predictions
+			if Set1[iter] == Set2[iter]:
+				# Prediction:- success and Actually:- success -> True Positive	
+				if Set1[iter] == 1:			  
+					count[0] += 1
+				# Prediction:- failure and Actually:- failure -> True Negative
+				elif Set1[iter] == 0:		
+					count[1] += 1
+			# Incorrect Predictions
+			elif Set1[iter] != Set2[iter]:
+				# Prediction:- failure and Actually:- success -> False Negative	
+				if Set1[iter] == 1:			
+					count[2] += 1
+				# Prediction:- success and Actually:- failure -> False Positive
+				elif Set1[iter] == 0:		 
+					count[3] += 1
+		# False Negative Rate
+		FNR = count[2]/(count[0]+count[2])
+		# False Positive Rate
+		FPR = count[3]/(count[1]+count[3])
+		# Recall (True Positive Rate) 
+		Recall = count[0]/(count[0]+count[2])
+		# Specificity (True Negative Rate)
+		Specificity = count[1]/(count[1]+count[3])
+		Precision = count[0]/(count[0]+count[3])
+		Prevalence = (count[0]+count[2])/(count[0]+count[1]+count[2]+count[3])
+		correctPrediction = (count[0]+count[1])/(count[0]+count[1]+count[2]+count[3])
+		incorrectPrediction = (count[2]+count[3])/(count[0]+count[1]+count[2]+count[3])
+		return [Recall, Specificity, Precision, Prevalence, correctPrediction, incorrectPrediction]
+
 
 # Training ML model using Logistics Regression
 print("\n\t\t\t\t Training ML model \n")
 logistics_var = simpleLogistic_regression()
 # Preparing Data for 
-excel = 'House Price.csv'
+excel = 'Mouse Obesity.csv'
 dataSet = simpleLogistic_regression.load_CSV(excel)
 for i in range(len(dataSet[0])):
     simpleLogistic_regression.string_to_float(dataSet, i)
+actualSet = []
+for row in dataSet:
+	actualSet.append(row[-1])
+print(f"Actual Set = {actualSet}")
 params = simpleLogistic_regression.coefficients(dataSet)
+print(f"Coefficients:-\n\t beta0 = {params[0]}\t beta1 = {params[1]}")
 predictSet = simpleLogistic_regression.predict(dataSet, params)
-print(f"Training:- Predicted Set = {predictSet}") 
+print(f"Predicted Set = {predictSet}")
+accuracyMetrics = simpleLogistic_regression.measureAccuracy(actualSet, predictSet)
+print(f"Training Accuracy Results:-\n\tRecall = {accuracyMetrics[0]}\n\tSpecificity = {accuracyMetrics[1]}\n\tPrecision = {accuracyMetrics[2]}")
+print(f"\tPrevalence = {accuracyMetrics[3]}\n\tClassification Accuracy = {accuracyMetrics[4]}\n\tMisclassification Accuracy = {accuracyMetrics[5]}")
 # Testing the ML model using Test Dataset
-print("\n\t\t\t\t Testing ML model \n")
-test_csv = 'House Price test.csv'
-test_dataSet = simpleLogistic_regression.load_CSV(test_csv)
-actual_value = []
-for row in test_dataSet:
-    actual_value.append(row[-1])
-print(f"Testing:- Actual Set = {actual_value}")
-predicted_value = simpleLogistic_regression.prediction(test_dataSet, params)
-print(f"Testing:- Predicted Set = {predicted_value}")
-
-
-
+print("\n\n\t\t\t\t Testing ML model \n")
+excel = 'Mouse Obesity test.csv'
+dataSet = simpleLogistic_regression.load_CSV(excel)
+actualSet = []
+for row in dataSet:
+    actualSet.append(row[-1])
+print(f"Testing:- Actual Set = {actualSet}")
+predictSet = simpleLogistic_regression.prediction(dataSet, params)
+print(f"Testing:- Predicted Set = {predictSet}")
+accuracyMetrics = simpleLogistic_regression.measureAccuracy(actualSet, predictSet)
+print(f"Training Accuracy:-\n\tRecall = {accuracyMetrics[0]}\n\tSpecificity = {accuracyMetrics[1]}\n\tPrecision = {accuracyMetrics[2]}")
+print(f"\tPrevalence = {accuracyMetrics[3]}\n\tClassification Accuracy = {accuracyMetrics[4]}\n\tMisclassification Accuracy = {accuracyMetrics[5]}")
