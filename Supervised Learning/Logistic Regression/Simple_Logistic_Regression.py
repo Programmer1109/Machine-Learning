@@ -6,6 +6,7 @@ class simpleLogistic_regression:
 
 	def __init__(self):
 		self.threshold = 0.5
+		self.count = [0, 0, 0, 0]
 
 	def load_CSV(self, filename):
 		dataset = []
@@ -102,19 +103,71 @@ class simpleLogistic_regression:
 				# Prediction:- success and Actually:- failure -> False Positive
 				elif Set1[iter] == 0:		 
 					count[3] += 1
-		# False Negative Rate
-		FNR = count[2]/(count[0]+count[2])
-		# False Positive Rate
-		FPR = count[3]/(count[1]+count[3])
-		# Recall (True Positive Rate) 
 		Recall = count[0]/(count[0]+count[2])
-		# Specificity (True Negative Rate)
 		Specificity = count[1]/(count[1]+count[3])
 		Precision = count[0]/(count[0]+count[3])
 		Prevalence = (count[0]+count[2])/(count[0]+count[1]+count[2]+count[3])
 		correctPrediction = (count[0]+count[1])/(count[0]+count[1]+count[2]+count[3])
-		incorrectPrediction = (count[2]+count[3])/(count[0]+count[1]+count[2]+count[3])
-		return [Recall, Specificity, Precision, Prevalence, correctPrediction, incorrectPrediction]
+		return [Recall, Specificity, Precision, Prevalence, correctPrediction]
+
+	def calc_Threshold(self, Set1, Set2):
+		threshold_values = list(range(0,1, 0.1))
+		print(f"Set of threshold values = {threshold_values}")
+		Ones = 0
+		Zeros = 0
+		for row in Set1:
+			if row==1:
+				Ones = Ones + 1
+			else:
+				Zeros = Zeros + 1
+		if Ones<=0.70*(Ones+Zeros):
+			ROC_point = list()
+			for value in threshold_values:
+				self.count = [0, 0, 0, 0]
+				for iter in range(len(Set1)):
+				# Correct Predictions
+					if Set1[iter] == Set2[iter]:
+						# Prediction:- success and Actually:- success -> True Positive	
+						if Set1[iter] == 1:			  
+							self.count[0] += 1
+						# Prediction:- failure and Actually:- failure -> True Negative
+						elif Set1[iter] == 0:		
+							self.count[1] += 1
+					# Incorrect Predictions
+					elif Set1[iter] != Set2[iter]:
+						# Prediction:- failure and Actually:- success -> False Negative	
+						if Set1[iter] == 1:			
+							self.count[2] += 1
+						# Prediction:- success and Actually:- failure -> False Positive
+						elif Set1[iter] == 0:		 
+							self.count[3] += 1
+				Recall = self.count[0]/(self.count[0]+self.count[2])
+				Specificity = self.count[1]/(self.count[1]+self.count[3])
+				ROC_point.append(Recall, 1-Specificity)
+		elif Ones>0.7*(Ones+Zeros):
+			ROC_point = list()
+			for value in threshold_values:
+				self.count = [0, 0, 0, 0]
+				for iter in range(len(Set1)):
+				# Correct Predictions
+					if Set1[iter] == Set2[iter]:
+						# Prediction:- success and Actually:- success -> True Positive	
+						if Set1[iter] == 1:			  
+							self.count[0] += 1
+						# Prediction:- failure and Actually:- failure -> True Negative
+						elif Set1[iter] == 0:		
+							self.count[1] += 1
+					# Incorrect Predictions
+					elif Set1[iter] != Set2[iter]:
+						# Prediction:- failure and Actually:- success -> False Negative	
+						if Set1[iter] == 1:			
+							self.count[2] += 1
+						# Prediction:- success and Actually:- failure -> False Positive
+						elif Set1[iter] == 0:		 
+							self.count[3] += 1
+				Recall = self.count[0]/(self.count[0]+self.count[2])
+				Precision = self.count[0]/(self.count[0]+self.count[3])
+				ROC_point.append(Recall, Precision)
 
 
 # Training ML model using Logistics Regression
@@ -135,7 +188,9 @@ predictSet = simpleLogistic_regression.predict(dataSet, params)
 print(f"Predicted Set = {predictSet}")
 accuracyMetrics = simpleLogistic_regression.measureAccuracy(actualSet, predictSet)
 print(f"Training Accuracy Results:-\n\tRecall = {accuracyMetrics[0]}\n\tSpecificity = {accuracyMetrics[1]}\n\tPrecision = {accuracyMetrics[2]}")
-print(f"\tPrevalence = {accuracyMetrics[3]}\n\tClassification Accuracy = {accuracyMetrics[4]}\n\tMisclassification Accuracy = {accuracyMetrics[5]}")
+print(f"\tPrevalence = {accuracyMetrics[3]}\n\tClassification Accuracy = {accuracyMetrics[4]}\n\tMisclassification Accuracy = {1-accuracyMetrics[4]}")
+simpleLogistic_regression.calc_Threshold(actualSet, predictSet)
+
 # Testing the ML model using Test Dataset
 print("\n\n\t\t\t\t Testing ML model \n")
 excel = 'Mouse Obesity test.csv'
