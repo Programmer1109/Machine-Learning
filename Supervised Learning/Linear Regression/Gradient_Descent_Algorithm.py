@@ -1,5 +1,4 @@
 import csv
-from itertools import count
 import math as algebra
 
 
@@ -19,15 +18,15 @@ class Gradient_Descent:
                 dataset.append(row)
         return dataset
 
-    def string_to_float(self, dataset, column):
-        for row in range(len(dataset[0])):
+    def string_to_float(self, dataSet, column):
+        for row in dataSet:
             row[column] = float(row[column].strip())
 
     def prediction(self, Set, beta):
         Yhat = []
         for outer in range(len(Set)):
             value = 0.0
-            for inner in range(len(Set[0])):
+            for inner in range(len(Set[0])-1):
                 value += beta[inner] * Set[outer][inner] 
                 Yhat.append(value)
         return Yhat
@@ -45,22 +44,19 @@ class Gradient_Descent:
         epoch = 1
         beta = []
         stepSize = []
-        count = 0
+        loopVar = 0
         for i in range(len(trainSet[0])-1):
             beta.append(0.0)
             stepSize.append(0.0)
-        # print(f"Training:- Actual Set = {Y_data}")
-        while(epoch<=self.max_iterations and count!=0):
-            count = 0
+        while(epoch<=self.max_iterations and loopVar!=0):
+            loopVar = 0
             for iter in range(len(trainSet[0])-1):
-                if stepSize[iter]>=0.001 or iter==0:
+                if stepSize[iter]>=0.001 or epoch==1:
                     yBar = self.prediction(trainSet, beta)
                     stepSize[iter] = self.alpha * self.sum_of_derivative(trainSet, yBar, iter)
                     beta[iter] -= stepSize[iter]
-                    epoch = epoch + 1
-                    count += 1
-                else:
-                    break
+                    loopVar += 1 
+                epoch = epoch + 1
         return beta
 
     # Set1 -> Set containing actual values and Set2 -> Set containing predicted values
@@ -87,9 +83,11 @@ class Gradient_Descent:
 # Training the ML model using Gradient Descent Algorithm
 print("\n\t\t\t\t Training ML model \n")
 gradDes_var = Gradient_Descent()
-# Preparing Data for 
+# Preparing Data for ML model 
 excel = 'House Price.csv'
 dataSet = gradDes_var.load_CSV(excel)
+for i in range(len(dataSet[0])):
+    gradDes_var.string_to_float(dataSet, i)
 params = gradDes_var.coefficients(dataSet)
 predictSet = gradDes_var.prediction(params, dataSet)
 print(f"Training:- Predicted Set = {predictSet}") 
