@@ -22,6 +22,15 @@ class Gradient_Descent:
         for row in dataSet:
             row[column] = float(row[column].strip())
 
+    def row_sum(self, values, weights):
+        if len(values) == len(weights):
+            sum = 0.0
+            for iter in range(len(values)-1):
+                sum = sum + weights[iter] * values[iter]
+            return sum
+        else:
+            return NULL
+        
     def prediction(self, Set, beta):
         Yhat = []
         for outer in range(len(Set)):
@@ -31,33 +40,24 @@ class Gradient_Descent:
                 Yhat.append(value)
         return Yhat
 
-    def sum_of_derivative(self, dataSet, y_Bar, param):
-        derivativesum = 0.0
-        length = len(dataSet)
-        for iter in range(length):
-            derivativesum += (y_Bar[iter]-dataSet[iter][-1]) * dataSet[iter][param]
-        return derivativesum/float(length)
-
     def coefficients(self, trainSet):
         if self.max_iterations>1000:
-            self.max_iterations = 1000
+            self.max_iterations = 1000     
         epoch = 1
-        beta = []
-        stepSize = []
-        loopVar = 0
+        oldParameters = []
+        newParameters = []
+        flagVar = 0
         for i in range(len(trainSet[0])-1):
             beta.append(0.0)
             stepSize.append(0.0)
-        while(epoch<=self.max_iterations and loopVar!=0):
-            loopVar = 0
-            for iter in range(len(trainSet[0])-1):
-                if stepSize[iter]>=0.001 or epoch==1:
-                    yBar = self.prediction(trainSet, beta)
-                    stepSize[iter] = self.alpha * self.sum_of_derivative(trainSet, yBar, iter)
-                    beta[iter] -= stepSize[iter]
-                    loopVar += 1 
-                epoch = epoch + 1
-        return beta
+        for outer in range(len(trainSet)):
+            for inner in range(len(trainSet[0])):
+                if newParameters[inner] - oldParameters[inner] > 0.01 or epoch == 1: 
+                    yBar = self.row_sum(trainSet[outer], newParameters)
+                    gradient = -2 * (trainSet[outer][-1] - yBar) * trainSet[outer][inner]
+                    oldParameters[inner] = newParameters[inner]
+                    newParameters[inner] = newParameters[inner] - self.alpha * gradient
+                
 
     # Set1 -> Set containing actual values and Set2 -> Set containing predicted values
     def root_mean_square_error(self, Set1, Set2): 
