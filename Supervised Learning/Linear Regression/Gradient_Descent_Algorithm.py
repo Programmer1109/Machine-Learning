@@ -50,15 +50,17 @@ class Gradient_Descent:
         for i in range(len(trainSet[0])-1):
             beta.append(0.0)
             stepSize.append(0.0)
-        for outer in range(len(trainSet)):
-            for inner in range(len(trainSet[0])):
-                if newParameters[inner] - oldParameters[inner] > 0.01 or epoch == 1: 
-                    yBar = self.row_sum(trainSet[outer], newParameters)
-                    gradient = -2 * (trainSet[outer][-1] - yBar) * trainSet[outer][inner]
-                    oldParameters[inner] = newParameters[inner]
-                    newParameters[inner] = newParameters[inner] - self.alpha * gradient
+        while epoch<=self.max_iterations:
+            for outer in range(len(trainSet)):
+                for inner in range(len(trainSet[0])):
+                    if abs(newParameters[inner] - oldParameters[inner]) > 0.01 or epoch == 1: 
+                        yBar = self.row_sum(trainSet[outer], newParameters)
+                        gradient = -2 * (trainSet[outer][-1] - yBar) * trainSet[outer][inner]
+                        oldParameters[inner] = newParameters[inner]
+                        newParameters[inner] = newParameters[inner] - self.alpha * gradient
+            epoch = epoch + 1
+        return newParameters
                 
-
     # Set1 -> Set containing actual values and Set2 -> Set containing predicted values
     def root_mean_square_error(self, Set1, Set2): 
         if len(Set1) == len(Set2):
